@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import com.github.richygreat.microbankbff.stream.KafkaChannel;
+import com.github.richygreat.microbankbff.stream.KafkaEventConstants;
 import com.github.richygreat.microbankbff.stream.KafkaMessageUtility;
 import com.github.richygreat.microbankbff.stream.Source;
 import com.github.richygreat.microbankbff.user.entity.UserEntity;
@@ -36,12 +37,12 @@ public class UserService {
 			throw new UserAlreadyExistsException();
 		}
 		userDTO.setId(UUID.randomUUID().toString());
-		source.userProducer()
-				.send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(), "PENDING_CREATION"));
+		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
+				KafkaEventConstants.USER_PENDING_CREATION));
 	}
 
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = "headers['event'] == 'PENDING_CREATION'")
 	@Transactional
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_PENDING_CREATION)
 	public void handleUserPendingCreation(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserPendingCreation: Entering: userDTO: {} partition: {}", userDTO, partition);
@@ -54,11 +55,5 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
-		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getId(), "CREATED"));
-	}
-
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = "headers['event'] == 'CREATED'")
-	public void handleUserCreated(@Payload UserDTO userDTO, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
-		log.info("handleUserCreated: Entering: userDTO: {} partition: {}", userDTO, partition);
 	}
 }
