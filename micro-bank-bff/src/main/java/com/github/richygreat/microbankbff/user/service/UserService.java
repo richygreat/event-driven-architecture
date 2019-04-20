@@ -17,6 +17,7 @@ import com.github.richygreat.microbankbff.stream.KafkaMessageUtility;
 import com.github.richygreat.microbankbff.stream.Source;
 import com.github.richygreat.microbankbff.user.entity.UserEntity;
 import com.github.richygreat.microbankbff.user.exception.UserAlreadyExistsException;
+import com.github.richygreat.microbankbff.user.exception.UserNotFoundException;
 import com.github.richygreat.microbankbff.user.model.UserDTO;
 import com.github.richygreat.microbankbff.user.repository.UserRepository;
 
@@ -55,5 +56,38 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
+	}
+
+	@Transactional
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_CREATED)
+	public void handleUserCreated(@Payload UserDTO userDTO, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
+		log.info("handleUserCreated: Entering: userDTO: {} partition: {}", userDTO, partition);
+	}
+
+	@Transactional
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_CREATION_FAILED)
+	public void handleUserCreationFailed(@Payload UserDTO userDTO,
+			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
+		log.info("handleUserCreationFailed: Entering: userDTO: {} partition: {}", userDTO, partition);
+		Optional<UserEntity> optionalUser = userRepository.findById(userDTO.getId());
+		if (optionalUser.isPresent()) {
+			UserEntity user = optionalUser.get();
+			user.setFailureReason(userDTO.getFailureReason());
+			userRepository.save(user);
+		}
+	}
+
+	public UserDTO getUser(String id) {
+		Optional<UserEntity> optionalUser = userRepository.findById(id);
+		if (!optionalUser.isPresent()) {
+			throw new UserNotFoundException();
+		}
+		UserEntity user = optionalUser.get();
+		UserDTO userDTO = new UserDTO();
+		userDTO.setId(user.getId());
+		userDTO.setUserName(user.getUserName());
+		userDTO.setTaxId(user.getTaxId());
+		userDTO.setFailureReason(user.getFailureReason());
+		return userDTO;
 	}
 }

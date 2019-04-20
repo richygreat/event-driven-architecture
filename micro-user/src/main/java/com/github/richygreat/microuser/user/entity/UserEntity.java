@@ -1,4 +1,4 @@
-package com.github.richygreat.microbankbff.user.entity;
+package com.github.richygreat.microuser.user.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -12,5 +12,4 @@ public class UserEntity {
 	private String id;
 	private String userName;
 	private String taxId;
-	private String failureReason;
 }

@@ -1,4 +1,4 @@
-package com.github.richygreat.microbankbff.user.model;
+package com.github.richygreat.microuser.user.model;
 
 import lombok.Data;
 
