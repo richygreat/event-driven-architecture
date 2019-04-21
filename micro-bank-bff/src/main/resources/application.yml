@@ -29,6 +29,7 @@ logging:
     org.apache.kafka.clients.consumer.ConsumerConfig: ERROR
     org.apache.kafka.clients.admin.AdminClientConfig: ERROR
     org.apache.kafka.clients.producer.ProducerConfig: ERROR
+    org.springframework.cloud.stream.binding: ERROR
 ---
 spring:
   profiles: dev
