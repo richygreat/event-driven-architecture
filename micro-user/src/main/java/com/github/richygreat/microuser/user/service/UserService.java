@@ -29,7 +29,7 @@ public class UserService {
 	private final UserRepository userRepository;
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_PENDING_CREATION)
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_PENDING_CREATION_HEADER)
 	public void handleUserPendingCreation(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserPendingCreation: Entering: userDTO: {} partition: {}", userDTO, partition);

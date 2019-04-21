@@ -39,11 +39,11 @@ public class UserService {
 		}
 		userDTO.setId(UUID.randomUUID().toString());
 		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
-				KafkaEventConstants.USER_PENDING_CREATION));
+				KafkaEventConstants.USER_CREATION_REQUESTED));
 	}
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_PENDING_CREATION)
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATION_REQUESTED_HEADER)
 	public void handleUserPendingCreation(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserPendingCreation: Entering: userDTO: {} partition: {}", userDTO, partition);
@@ -56,16 +56,18 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
+		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
+				KafkaEventConstants.USER_PENDING_CREATION));
 	}
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_CREATED)
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATED_HEADER)
 	public void handleUserCreated(@Payload UserDTO userDTO, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserCreated: Entering: userDTO: {} partition: {}", userDTO, partition);
 	}
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.CONDITION_USER_CREATION_FAILED)
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATION_FAILED_HEADER)
 	public void handleUserCreationFailed(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserCreationFailed: Entering: userDTO: {} partition: {}", userDTO, partition);
