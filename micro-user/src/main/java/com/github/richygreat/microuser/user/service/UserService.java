@@ -14,6 +14,7 @@ import com.github.richygreat.microuser.stream.KafkaChannel;
 import com.github.richygreat.microuser.stream.KafkaEventConstants;
 import com.github.richygreat.microuser.stream.KafkaMessageUtility;
 import com.github.richygreat.microuser.stream.Source;
+import com.github.richygreat.microuser.stream.exception.EventPushFailedException;
 import com.github.richygreat.microuser.user.entity.UserEntity;
 import com.github.richygreat.microuser.user.model.UserDTO;
 import com.github.richygreat.microuser.user.repository.UserRepository;
@@ -29,10 +30,10 @@ public class UserService {
 	private final UserRepository userRepository;
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_PENDING_CREATION_HEADER)
-	public void handleUserPendingCreation(@Payload UserDTO userDTO,
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATION_REQUESTED_HEADER)
+	public void handleUserCreationRequested(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
-		log.info("handleUserPendingCreation: Entering: userDTO: {} partition: {}", userDTO, partition);
+		log.info("handleUserCreationRequested: Entering: userDTO: {} partition: {}", userDTO, partition);
 		Optional<UserEntity> optionalUser = userRepository.findByUserName(userDTO.getUserName());
 		if (optionalUser.isPresent()) {
 			userDTO.setFailureReason("Duplicate found");
@@ -45,7 +46,11 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
-		source.userProducer().send(
+		boolean sent = source.userProducer().send(
 				KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(), KafkaEventConstants.USER_CREATED));
+		log.info("handleUserCreationRequested: Exiting userDTO: {} sent: {}", userDTO.getId(), sent);
+		if (!sent) {
+			throw new EventPushFailedException();
+		}
 	}
 }

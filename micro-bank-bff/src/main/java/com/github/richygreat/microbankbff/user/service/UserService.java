@@ -15,6 +15,7 @@ import com.github.richygreat.microbankbff.stream.KafkaChannel;
 import com.github.richygreat.microbankbff.stream.KafkaEventConstants;
 import com.github.richygreat.microbankbff.stream.KafkaMessageUtility;
 import com.github.richygreat.microbankbff.stream.Source;
+import com.github.richygreat.microbankbff.stream.exception.EventPushFailedException;
 import com.github.richygreat.microbankbff.user.entity.UserEntity;
 import com.github.richygreat.microbankbff.user.exception.UserAlreadyExistsException;
 import com.github.richygreat.microbankbff.user.exception.UserNotFoundException;
@@ -38,15 +39,18 @@ public class UserService {
 			throw new UserAlreadyExistsException();
 		}
 		userDTO.setId(UUID.randomUUID().toString());
-		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
+		boolean sent = source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
 				KafkaEventConstants.USER_CREATION_REQUESTED));
+		log.info("createUser: Exiting userDTO: {} sent: {}", userDTO.getId(), sent);
+		if (!sent) {
+			throw new EventPushFailedException();
+		}
 	}
 
 	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATION_REQUESTED_HEADER)
-	public void handleUserPendingCreation(@Payload UserDTO userDTO,
-			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
-		log.info("handleUserPendingCreation: Entering: userDTO: {} partition: {}", userDTO, partition);
+	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATED_HEADER)
+	public void handleUserCreated(@Payload UserDTO userDTO, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
+		log.info("handleUserCreated: Entering: userDTO: {} partition: {}", userDTO, partition);
 		Optional<UserEntity> optionalUser = userRepository.findByUserName(userDTO.getUserName());
 		if (optionalUser.isPresent()) {
 			throw new UserAlreadyExistsException();
@@ -56,14 +60,6 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
-		source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
-				KafkaEventConstants.USER_PENDING_CREATION));
-	}
-
-	@Transactional
-	@StreamListener(value = KafkaChannel.USER_SINK_CHANNEL, condition = KafkaEventConstants.USER_CREATED_HEADER)
-	public void handleUserCreated(@Payload UserDTO userDTO, @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
-		log.info("handleUserCreated: Entering: userDTO: {} partition: {}", userDTO, partition);
 	}
 
 	@Transactional
@@ -71,12 +67,7 @@ public class UserService {
 	public void handleUserCreationFailed(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserCreationFailed: Entering: userDTO: {} partition: {}", userDTO, partition);
-		Optional<UserEntity> optionalUser = userRepository.findById(userDTO.getId());
-		if (optionalUser.isPresent()) {
-			UserEntity user = optionalUser.get();
-			user.setFailureReason(userDTO.getFailureReason());
-			userRepository.save(user);
-		}
+		// Write this as a rest log
 	}
 
 	public UserDTO getUser(String id) {
