@@ -37,8 +37,11 @@ public class UserService {
 		Optional<UserEntity> optionalUser = userRepository.findByUserName(userDTO.getUserName());
 		if (optionalUser.isPresent()) {
 			userDTO.setFailureReason("Duplicate found");
-			source.userProducer().send(KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(),
-					KafkaEventConstants.USER_CREATION_FAILED));
+			boolean sent = source.userProducer().send(KafkaMessageUtility.createMessage(userDTO,
+					KafkaEventConstants.USER_CREATION_FAILED, userDTO.getId()));
+			if (!sent) {
+				throw new EventPushFailedException();
+			}
 			return;
 		}
 		UserEntity user = new UserEntity();
@@ -46,8 +49,8 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
-		boolean sent = source.userProducer().send(
-				KafkaMessageUtility.createMessage(userDTO, userDTO.getUserName(), KafkaEventConstants.USER_CREATED));
+		boolean sent = source.userProducer()
+				.send(KafkaMessageUtility.createMessage(userDTO, KafkaEventConstants.USER_CREATED, userDTO.getId()));
 		log.info("handleUserCreationRequested: Exiting userDTO: {} sent: {}", userDTO.getId(), sent);
 		if (!sent) {
 			throw new EventPushFailedException();

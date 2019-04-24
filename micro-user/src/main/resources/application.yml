@@ -8,6 +8,8 @@ spring:
   application:
     name: ^project.artifactId^
 spring.kafka:
+  producer.key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application.id: li5jiphz-^project.artifactId^
   bootstrap-servers: velomobile-01.srvs.cloudkafka.com:9094,velomobile-02.srvs.cloudkafka.com:9094,velomobile-03.srvs.cloudkafka.com:9094
   properties:
     security.protocol: SASL_SSL
