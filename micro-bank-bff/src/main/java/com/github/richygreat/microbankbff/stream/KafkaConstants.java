@@ -8,4 +8,5 @@ public class KafkaConstants {
 	public static String EVENT = "event";
 
 	public static String USER_STORE = "user-snapshot";
+	public static String TRANSACTION_STORE = "transaction-snapshot";
 }

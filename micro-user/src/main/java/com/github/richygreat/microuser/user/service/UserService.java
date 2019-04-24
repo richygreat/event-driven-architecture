@@ -38,7 +38,7 @@ public class UserService {
 		if (optionalUser.isPresent()) {
 			userDTO.setFailureReason("Duplicate found");
 			boolean sent = source.userProducer().send(KafkaMessageUtility.createMessage(userDTO,
-					KafkaEventConstants.USER_CREATION_FAILED, userDTO.getId()));
+					KafkaEventConstants.USER_CREATION_FAILED, userDTO.getId(), userDTO.getUserName()));
 			if (!sent) {
 				throw new EventPushFailedException();
 			}
@@ -49,8 +49,8 @@ public class UserService {
 		user.setUserName(userDTO.getUserName());
 		user.setTaxId(userDTO.getTaxId());
 		userRepository.save(user);
-		boolean sent = source.userProducer()
-				.send(KafkaMessageUtility.createMessage(userDTO, KafkaEventConstants.USER_CREATED, userDTO.getId()));
+		boolean sent = source.userProducer().send(KafkaMessageUtility.createMessage(userDTO,
+				KafkaEventConstants.USER_CREATED, userDTO.getId(), userDTO.getUserName()));
 		log.info("handleUserCreationRequested: Exiting userDTO: {} sent: {}", userDTO.getId(), sent);
 		if (!sent) {
 			throw new EventPushFailedException();

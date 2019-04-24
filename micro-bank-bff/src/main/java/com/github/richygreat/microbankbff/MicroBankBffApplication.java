@@ -14,6 +14,7 @@ import org.springframework.kafka.support.serializer.JsonSerde;
 
 import com.github.richygreat.microbankbff.stream.KafkaConstants;
 import com.github.richygreat.microbankbff.stream.Processor;
+import com.github.richygreat.microbankbff.transaction.model.TransactionDTO;
 import com.github.richygreat.microbankbff.user.model.UserDTO;
 
 @SpringBootApplication
@@ -29,5 +30,12 @@ public class MicroBankBffApplication {
 		return streamsBuilder.globalTable("li5jiphz-user",
 				Consumed.with(Serdes.String(), new JsonSerde<>(UserDTO.class)),
 				Materialized.as(KafkaConstants.USER_STORE));
+	}
+	
+	@Bean
+	public GlobalKTable<String, TransactionDTO> transactionSnapshotTable(StreamsBuilder streamsBuilder) {
+		return streamsBuilder.globalTable("li5jiphz-transaction",
+				Consumed.with(Serdes.String(), new JsonSerde<>(TransactionDTO.class)),
+				Materialized.as(KafkaConstants.TRANSACTION_STORE));
 	}
 }

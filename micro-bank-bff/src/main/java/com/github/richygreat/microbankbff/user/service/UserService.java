@@ -72,7 +72,6 @@ public class UserService {
 	public void handleUserCreationFailed(@Payload UserDTO userDTO,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
 		log.info("handleUserCreationFailed: Entering: userDTO: {} partition: {}", userDTO, partition);
-		// Write this as a rest log
 	}
 
 	public UserDTO getUser(String id) {
