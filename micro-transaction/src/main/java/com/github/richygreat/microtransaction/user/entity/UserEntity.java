@@ -12,4 +12,5 @@ public class UserEntity {
 	private String id;
 	private String userName;
 	private String taxId;
+	private Double balance = 0.0;
 }
