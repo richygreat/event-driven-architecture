@@ -15,7 +15,6 @@
 	</parent>
 
 	<modules>
-		<module>micro-bank-bff</module>
 		<module>micro-user</module>
 		<module>micro-transaction</module>
 	</modules>

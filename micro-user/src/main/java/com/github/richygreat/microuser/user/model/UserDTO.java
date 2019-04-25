@@ -7,5 +7,4 @@ public class UserDTO {
 	private String id;
 	private String userName;
 	private String taxId;
-	private String failureReason;
 }

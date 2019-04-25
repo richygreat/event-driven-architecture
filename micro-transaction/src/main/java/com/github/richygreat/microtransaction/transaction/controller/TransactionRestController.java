@@ -1,12 +1,12 @@
-package com.github.richygreat.microbankbff.transaction.controller;
+package com.github.richygreat.microtransaction.transaction.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.richygreat.microbankbff.transaction.model.TransactionDTO;
-import com.github.richygreat.microbankbff.transaction.service.TransactionService;
+import com.github.richygreat.microtransaction.transaction.model.TransactionDTO;
+import com.github.richygreat.microtransaction.transaction.service.TransactionService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

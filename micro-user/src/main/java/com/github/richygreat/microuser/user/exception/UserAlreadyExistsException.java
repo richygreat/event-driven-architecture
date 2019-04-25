@@ -1,4 +1,4 @@
-package com.github.richygreat.microbankbff.user.exception;
+package com.github.richygreat.microuser.user.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

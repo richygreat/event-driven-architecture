@@ -1,16 +1,21 @@
 package com.github.richygreat.microtransaction.transaction.service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.transaction.Transactional;
 
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import com.github.richygreat.microtransaction.stream.KafkaChannel;
+import com.github.richygreat.microtransaction.stream.KafkaConstants;
 import com.github.richygreat.microtransaction.stream.KafkaEventConstants;
 import com.github.richygreat.microtransaction.stream.KafkaMessageUtility;
 import com.github.richygreat.microtransaction.stream.Source;
@@ -31,6 +36,21 @@ public class TransactionService {
 	private final Source source;
 	private final TransactionRepository transactionRepository;
 	private final UserRepository userRepository;
+	private final StreamsBuilderFactoryBean streamsBuilderFactoryBean;
+	private ReadOnlyKeyValueStore<String, TransactionDTO> transactionSnapshotStore;
+
+	@Transactional
+	public void createTransaction(TransactionDTO transactionDTO) {
+		transactionDTO.setId(UUID.randomUUID().toString());
+		boolean sent = source.transactionProducer()
+				.send(KafkaMessageUtility.createMessage(transactionDTO,
+						KafkaEventConstants.TRANSACTION_CREATION_REQUESTED, transactionDTO.getId(),
+						transactionDTO.getUserId()));
+		log.info("createTransaction: Exiting transactionDTO: {} sent: {}", transactionDTO.getId(), sent);
+		if (!sent) {
+			throw new EventPushFailedException();
+		}
+	}
 
 	@Transactional
 	@StreamListener(value = KafkaChannel.TRANSACTION_SINK_CHANNEL, condition = KafkaEventConstants.TRANSACTION_CREATION_REQUESTED_HEADER)
@@ -41,6 +61,7 @@ public class TransactionService {
 		Optional<UserEntity> optionalUser = userRepository.findById(transactionDTO.getUserId());
 		if (!optionalUser.isPresent()) {
 			failTransaction(transactionDTO, "User Not found");
+			return;
 		}
 		Optional<TransactionEntity> optionalTransaction = transactionRepository.findById(transactionDTO.getId());
 		if (optionalTransaction.isPresent()) {
@@ -74,5 +95,28 @@ public class TransactionService {
 		if (!sent) {
 			throw new EventPushFailedException();
 		}
+	}
+
+	public TransactionDTO getTransaction(String id) {
+		Optional<TransactionEntity> optionalTransaction = transactionRepository.findById(id);
+		if (!optionalTransaction.isPresent()) {
+			initOnRun();
+			return transactionSnapshotStore.get(id);
+		}
+		TransactionEntity transaction = optionalTransaction.get();
+		TransactionDTO transactionDTO = new TransactionDTO();
+		transactionDTO.setId(transaction.getId());
+		transactionDTO.setUserId(transaction.getUserId());
+		transactionDTO.setAmount(transaction.getAmount());
+		transactionDTO.setFailureReason(transaction.getFailureReason());
+		return transactionDTO;
+	}
+
+	public void initOnRun() {
+		if (transactionSnapshotStore != null) {
+			return;
+		}
+		transactionSnapshotStore = streamsBuilderFactoryBean.getKafkaStreams().store(KafkaConstants.TRANSACTION_STORE,
+				QueryableStoreTypes.keyValueStore());
 	}
 }

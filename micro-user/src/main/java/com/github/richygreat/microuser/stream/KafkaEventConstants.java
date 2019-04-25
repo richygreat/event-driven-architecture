@@ -5,7 +5,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class KafkaEventConstants {
 	public static final String USER_CREATION_REQUESTED = "CREATION_REQUESTED";
-	public static final String USER_CREATION_FAILED = "CREATION_FAILED";
 	public static final String USER_CREATED = "CREATED";
 
 	public static final String HEADER_PREFIX = "headers['event'] == '";
