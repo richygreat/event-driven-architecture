@@ -3,7 +3,7 @@ application:
   description: ^project.name^
   version: ^project.version^
 server:
-  port: 8081
+  port: 8083
 spring:
   application:
     name: ^project.artifactId^
@@ -20,12 +20,9 @@ spring.cloud.stream.bindings:
   user-sink:
     contentType: application/json
     destination: li5jiphz-user
-  user-source:
+  transaction-sink:
     contentType: application/json
-    destination: li5jiphz-user
-    producer:
-      partition-key-expression: headers['partitionKey']
-spring.cloud.stream.kafka.bindings.user-source.producer.sync: true
+    destination: li5jiphz-transaction
 logging:
   level:
     org.apache.kafka.clients.consumer.ConsumerConfig: ERROR
@@ -38,4 +35,4 @@ spring:
   profiles: dev
 logging:
   level:
-    com.github.richygreat.microuser: DEBUG
+    com.github.richygreat.microemail: DEBUG

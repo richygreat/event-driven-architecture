@@ -1,8 +1,8 @@
-package com.github.richygreat.microtransaction.user.repository;
+package com.github.richygreat.microemail.user.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.github.richygreat.microtransaction.user.entity.UserEntity;
+import com.github.richygreat.microemail.user.entity.UserEntity;
 
 public interface UserRepository extends JpaRepository<UserEntity, String> {
 }

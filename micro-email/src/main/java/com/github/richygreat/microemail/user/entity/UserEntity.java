@@ -1,4 +1,4 @@
-package com.github.richygreat.microtransaction.user.entity;
+package com.github.richygreat.microemail.user.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -10,6 +10,5 @@ import lombok.Data;
 public class UserEntity {
 	@Id
 	private String id;
-	private String taxId;
-	private Double balance = 0.0;
+	private String userName;
 }
