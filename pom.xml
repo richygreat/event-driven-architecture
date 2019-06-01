@@ -16,7 +16,6 @@
 
 	<modules>
 		<module>micro-user</module>
-		<module>micro-transaction</module>
 		<module>micro-email</module>
 	</modules>
 

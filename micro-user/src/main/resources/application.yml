@@ -20,6 +20,9 @@ spring.cloud.stream.bindings:
   user-sink:
     contentType: application/json
     destination: li5jiphz-user
+  email-sink:
+    contentType: application/json
+    destination: li5jiphz-email
   user-source:
     contentType: application/json
     destination: li5jiphz-user

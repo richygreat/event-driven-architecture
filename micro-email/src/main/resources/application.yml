@@ -20,9 +20,12 @@ spring.cloud.stream.bindings:
   user-sink:
     contentType: application/json
     destination: li5jiphz-user
-  transaction-sink:
+  email-source:
     contentType: application/json
-    destination: li5jiphz-transaction
+    destination: li5jiphz-email
+    producer:
+      partition-key-expression: headers['partitionKey']
+spring.cloud.stream.kafka.bindings.email-source.producer.sync: true
 logging:
   level:
     org.apache.kafka.clients.consumer.ConsumerConfig: ERROR
